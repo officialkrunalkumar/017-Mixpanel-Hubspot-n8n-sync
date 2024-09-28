@@ -1,0 +1,348 @@
+{
+  "name": "Mixpanel Dashboard Access Date",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "8fdc91b3-d024-4b24-aa24-cd77461c9466",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        540,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "id": "59c5461e-5e1b-4ee8-a975-17b60d43fd7d",
+      "name": "Wait 1 Minute",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1720,
+        400
+      ],
+      "webhookId": "938516b4-cf24-488e-8079-382045120b2f"
+    },
+    {
+      "parameters": {
+        "url": "https://data.mixpanel.com/api/2.0/export/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "from_date",
+              "value": "2011-07-10"
+            },
+            {
+              "name": "to_date",
+              "value": "={{ $json.yesterday }}"
+            },
+            {
+              "name": "event",
+              "value": "[\"Dashboard\"]"
+            },
+            {
+              "name": "where",
+              "value": "=properties[\"tenant_email_domain\"] == \"{{ $('Retrieve company domain').item.json.properties.domain }}\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "11dc06fa-4754-4e2f-8e76-442acb38a628",
+      "name": "Mixpanel Company's First Dashboard Access Date",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        400
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "iFCwklfdU5daw6LD",
+          "name": "MixPanel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/companies/{{ $('Get Company ID from Deal ID').item.json.results[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_APP_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"first_dashboard_access_date\": \"{{ $json.hubspotTimestamp }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "e12643fc-d4da-493d-b96e-ba1d8ca311dc",
+      "name": "Update Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const thirtyDaysAgo = new Date();\nthirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);\nconst timestamp30DaysAgo = thirtyDaysAgo.getTime();\nreturn { json: { timestamp30DaysAgo } };\n"
+      },
+      "id": "2ee293ae-f8e6-424b-bb75-cfd81f2a99e9",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.results[0].id }}/associations/companies",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_APP_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "45ab89a2-f3e6-4602-a050-886b65e9f9e0",
+      "name": "Get Company ID from Deal ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1140,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_APP_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"pipeline\",\n          \"operator\": \"EQ\",\n          \"value\": \"default\"\n        },\n        {\n          \"propertyName\": \"dealstage\",\n          \"operator\": \"EQ\",\n          \"value\": \"closedwon\"\n        },\n        {\n          \"propertyName\": \"dealtype\",\n          \"operator\": \"EQ\",\n          \"value\": \"newbusiness\"\n        },\n        {\n          \"propertyName\": \"closedate\",\n          \"operator\": \"GTE\",\n          \"value\": {{ $json[\"timestamp30DaysAgo\"] }}\n        }\n      ]\n    }\n  ],\n  \"limit\": 200\n}",
+        "options": {}
+      },
+      "id": "057d086c-8cc0-4125-af2e-eed0e1b8b34b",
+      "name": "Retrieve last 30 days deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/companies/{{ $json.results[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_APP_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ced4aa21-11ba-4923-8a71-62f2a719296a",
+      "name": "Retrieve company domain",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const yesterday = new Date();\nyesterday.setDate(yesterday.getDate() - 1);\n\nreturn {\n    json: {\n        yesterday: yesterday.toISOString().split('T')[0]\n    }\n};\n"
+      },
+      "id": "be1c4876-8210-45dd-b870-de2d86cccaa4",
+      "name": "Calculate Yesterday",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const events = $json[\"data\"].split(\"\\n\").filter(Boolean);\nlet earliestEvent = null;\nlet earliestTime = Infinity;\nfor (const eventStr of events) {\n    try {\n        const event = JSON.parse(eventStr);\n        const eventTime = event.properties.time;\n        if (eventTime < earliestTime) {\n            earliestTime = eventTime;\n            earliestEvent = event;\n        }\n    } catch (error) {\n        console.error(\"Failed to parse event:\", error);\n    }\n}\nif (earliestEvent) {\n    const firstEventDate = new Date(earliestTime * 1000).toISOString();\n    const date = new Date(firstEventDate);\n    const hubspotTimestamp = date.getTime();\n    return {\n        json: {\n            hubspotTimestamp\n        },\n    };\n} else {\n    return {\n        json: {\n            message: \"No events found\",\n        },\n    };\n}\n"
+      },
+      "id": "9c583b35-507b-470b-8a41-386fb8a5b637",
+      "name": "Code1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mixpanel Company's First Dashboard Access Date": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Retrieve last 30 days deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Company ID from Deal ID": {
+      "main": [
+        [
+          {
+            "node": "Retrieve company domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve last 30 days deal": {
+      "main": [
+        [
+          {
+            "node": "Get Company ID from Deal ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve company domain": {
+      "main": [
+        [
+          {
+            "node": "Calculate Yesterday",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Yesterday": {
+      "main": [
+        [
+          {
+            "node": "Wait 1 Minute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Update Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1 Minute": {
+      "main": [
+        [
+          {
+            "node": "Mixpanel Company's First Dashboard Access Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "338de835-ec09-43ac-b753-d2da159f633a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f35844c20bd7f8456f907e3b5a901af1cf08cec7fee985138953357fd244e5bd"
+  },
+  "id": "mVveUHW4ul7DejMn",
+  "tags": []
+}
