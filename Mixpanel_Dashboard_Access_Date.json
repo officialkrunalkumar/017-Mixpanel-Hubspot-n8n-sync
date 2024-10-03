@@ -14,67 +14,9 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
       "position": [
-        540,
+        480,
         400
       ]
-    },
-    {
-      "parameters": {
-        "amount": 1,
-        "unit": "minutes"
-      },
-      "id": "59c5461e-5e1b-4ee8-a975-17b60d43fd7d",
-      "name": "Wait 1 Minute",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        1720,
-        400
-      ],
-      "webhookId": "938516b4-cf24-488e-8079-382045120b2f"
-    },
-    {
-      "parameters": {
-        "url": "https://data.mixpanel.com/api/2.0/export/",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBasicAuth",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "from_date",
-              "value": "2011-07-10"
-            },
-            {
-              "name": "to_date",
-              "value": "={{ $json.yesterday }}"
-            },
-            {
-              "name": "event",
-              "value": "[\"Dashboard\"]"
-            },
-            {
-              "name": "where",
-              "value": "=properties[\"tenant_email_domain\"] == \"{{ $('Retrieve company domain').item.json.properties.domain }}\""
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "11dc06fa-4754-4e2f-8e76-442acb38a628",
-      "name": "Mixpanel Company's First Dashboard Access Date",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1900,
-        400
-      ],
-      "credentials": {
-        "httpBasicAuth": {
-          "id": "iFCwklfdU5daw6LD",
-          "name": "MixPanel"
-        }
-      }
     },
     {
       "parameters": {
@@ -89,7 +31,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer YOUR_APP_TOKEN"
+              "value": "Bearer HUBSPOT_TOKEN"
             }
           ]
         },
@@ -103,26 +45,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2300,
+        2460,
         400
       ]
     },
     {
       "parameters": {
-        "jsCode": "const thirtyDaysAgo = new Date();\nthirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);\nconst timestamp30DaysAgo = thirtyDaysAgo.getTime();\nreturn { json: { timestamp30DaysAgo } };\n"
-      },
-      "id": "2ee293ae-f8e6-424b-bb75-cfd81f2a99e9",
-      "name": "Code",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        740,
-        400
-      ]
-    },
-    {
-      "parameters": {
-        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.results[0].id }}/associations/companies",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.results.properties.hs_object_id }}/associations/companies",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -132,7 +61,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer YOUR_APP_TOKEN"
+              "value": "Bearer HUBSPOT_TOKEN"
             }
           ]
         },
@@ -143,7 +72,97 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1140,
+        1460,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/companies/{{ $json.results[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer HUBSPOT_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ced4aa21-11ba-4923-8a71-62f2a719296a",
+      "name": "Retrieve company domain",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1660,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8eb1cbad-cd0b-40a4-bd83-8411d86b71ce",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "080d593b-c040-4ad6-924b-ca808322252a",
+              "leftValue": "={{ $json.hubspotTimestamp }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3793511c-f77d-4867-85fd-5dd1548fd853",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "subtractFromDate",
+        "magnitude": "={{ $now }}",
+        "duration": 30,
+        "outputFieldName": "timestamp30DaysAgo",
+        "options": {}
+      },
+      "id": "f578ca39-15ab-49f1-b05c-45e408185b00",
+      "name": "Date & Time",
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        660,
         400
       ]
     },
@@ -160,76 +179,168 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer YOUR_APP_TOKEN"
+              "value": "Bearer HUBSPOT_TOKEN"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"pipeline\",\n          \"operator\": \"EQ\",\n          \"value\": \"default\"\n        },\n        {\n          \"propertyName\": \"dealstage\",\n          \"operator\": \"EQ\",\n          \"value\": \"closedwon\"\n        },\n        {\n          \"propertyName\": \"dealtype\",\n          \"operator\": \"EQ\",\n          \"value\": \"newbusiness\"\n        },\n        {\n          \"propertyName\": \"closedate\",\n          \"operator\": \"GTE\",\n          \"value\": {{ $json[\"timestamp30DaysAgo\"] }}\n        }\n      ]\n    }\n  ],\n  \"limit\": 200\n}",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"pipeline\",\n          \"operator\": \"EQ\",\n          \"value\": \"default\"\n        },\n        {\n          \"propertyName\": \"dealstage\",\n          \"operator\": \"EQ\",\n          \"value\": \"closedwon\"\n        },\n        {\n          \"propertyName\": \"dealtype\",\n          \"operator\": \"EQ\",\n          \"value\": \"newbusiness\"\n        },\n        {\n          \"propertyName\": \"closedate\",\n          \"operator\": \"GTE\",\n          \"value\": \"{{ $('Date & Time').item.json[\"timestamp30DaysAgo\"] }}\"\n        }\n      ]\n    }\n  ],\n  \"limit\": 200\n}",
         "options": {}
       },
       "id": "057d086c-8cc0-4125-af2e-eed0e1b8b34b",
-      "name": "Retrieve last 30 days deal",
+      "name": "GET Closed Won Deals in Last 30 Days",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        940,
+        860,
         400
       ]
     },
     {
       "parameters": {
-        "url": "=https://api.hubapi.com/crm/v3/objects/companies/{{ $json.results[0].id }}",
-        "sendHeaders": true,
-        "headerParameters": {
+        "fieldToSplitOut": "results",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "e513dd76-4ee9-4b43-942e-9a777c6a9d7e",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://data.mixpanel.com/api/2.0/export",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
           "parameters": [
             {
-              "name": "Content-Type",
-              "value": "application/json"
+              "name": "from_date",
+              "value": "2017-01-01"
             },
             {
-              "name": "Authorization",
-              "value": "Bearer YOUR_APP_TOKEN"
+              "name": "to_date",
+              "value": "={{ $today }}"
+            },
+            {
+              "name": "where",
+              "value": "=properties[\"tenant_email_domain\"] == \"{{ $json.properties.domain }}\""
+            },
+            {
+              "name": "event",
+              "value": "[\"Dashboard\"]"
+            },
+            {
+              "name": "project_id",
+              "value": "1998847"
             }
           ]
         },
         "options": {}
       },
-      "id": "ced4aa21-11ba-4923-8a71-62f2a719296a",
-      "name": "Retrieve company domain",
+      "id": "99c6b798-eca0-4552-8fec-928fb8829a74",
+      "name": "GET Dashboard Events",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1340,
-        400
+        1860,
+        420
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AMEXGcFl3daiEqWN",
+          "name": "Mixpanel Header Auth"
+        },
+        "httpBasicAuth": {
+          "id": "jYBMSfsxXCNqAD3b",
+          "name": "Mixpanel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json[\"data\"];\nconst events = data ? data.split(\"\\n\").filter(Boolean) : [];\nlet earliestEvent = null;\nlet earliestTime = Infinity;\nfor (const eventStr of events) {\n    try {\n        const event = JSON.parse(eventStr);\n        const eventTime = event.properties.time;\n        if (eventTime < earliestTime) {\n            earliestTime = eventTime;\n            earliestEvent = event;\n        }\n    } catch (error) {\n        console.error(\"Failed to parse event:\", error);\n    }\n}\nif (earliestEvent) {\n    const firstEventDate = new Date(earliestTime * 1000).toISOString();\n    const date = new Date(firstEventDate);\n    const hubspotTimestamp = date.getTime();\n    return {\n        json: {\n            hubspotTimestamp\n        },\n    };\n} else {\n    return {\n        json: {\n            message: \"No events found\",\n        },\n    };\n}\n"
+      },
+      "id": "2005eb08-4808-4a16-8abb-0cdd71ba613f",
+      "name": "First Access TimeStamp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2060,
+        420
       ]
     },
     {
       "parameters": {
-        "jsCode": "const yesterday = new Date();\nyesterday.setDate(yesterday.getDate() - 1);\n\nreturn {\n    json: {\n        yesterday: yesterday.toISOString().split('T')[0]\n    }\n};\n"
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1pXhkIETCst20Jxjp9zg6OzbmTqbY_pElcMpxsn2Zt2I",
+          "mode": "list",
+          "cachedResultName": "Companies Missing Activation Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pXhkIETCst20Jxjp9zg6OzbmTqbY_pElcMpxsn2Zt2I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "n8n data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pXhkIETCst20Jxjp9zg6OzbmTqbY_pElcMpxsn2Zt2I/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Domain": "={{ $('Retrieve company domain').item.json.properties.domain }}",
+            "Name": "={{ $('Retrieve company domain').item.json.properties.name }}"
+          },
+          "matchingColumns": [
+            "Domain"
+          ],
+          "schema": [
+            {
+              "id": "Domain",
+              "displayName": "Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "be1c4876-8210-45dd-b870-de2d86cccaa4",
-      "name": "Calculate Yesterday",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "efc11e79-8666-4532-9759-31f66e0f5d91",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
       "position": [
-        1540,
-        400
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const events = $json[\"data\"].split(\"\\n\").filter(Boolean);\nlet earliestEvent = null;\nlet earliestTime = Infinity;\nfor (const eventStr of events) {\n    try {\n        const event = JSON.parse(eventStr);\n        const eventTime = event.properties.time;\n        if (eventTime < earliestTime) {\n            earliestTime = eventTime;\n            earliestEvent = event;\n        }\n    } catch (error) {\n        console.error(\"Failed to parse event:\", error);\n    }\n}\nif (earliestEvent) {\n    const firstEventDate = new Date(earliestTime * 1000).toISOString();\n    const date = new Date(firstEventDate);\n    const hubspotTimestamp = date.getTime();\n    return {\n        json: {\n            hubspotTimestamp\n        },\n    };\n} else {\n    return {\n        json: {\n            message: \"No events found\",\n        },\n    };\n}\n"
-      },
-      "id": "9c583b35-507b-470b-8a41-386fb8a5b637",
-      "name": "Code1",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2100,
-        400
-      ]
+        1760,
+        720
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "HqbHrSkas3OPAXBF",
+          "name": "Google Sheets account 2"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -238,29 +349,7 @@
       "main": [
         [
           {
-            "node": "Code",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mixpanel Company's First Dashboard Access Date": {
-      "main": [
-        [
-          {
-            "node": "Code1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code": {
-      "main": [
-        [
-          {
-            "node": "Retrieve last 30 days deal",
+            "node": "Date & Time",
             "type": "main",
             "index": 0
           }
@@ -278,8 +367,20 @@
         ]
       ]
     },
-    "Retrieve last 30 days deal": {
+    "Retrieve company domain": {
       "main": [
+        [
+          {
+            "node": "GET Dashboard Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
         [
           {
             "node": "Get Company ID from Deal ID",
@@ -289,29 +390,18 @@
         ]
       ]
     },
-    "Retrieve company domain": {
+    "Update Company": {
       "main": [
         [
           {
-            "node": "Calculate Yesterday",
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Calculate Yesterday": {
-      "main": [
-        [
-          {
-            "node": "Wait 1 Minute",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code1": {
+    "If": {
       "main": [
         [
           {
@@ -319,14 +409,76 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
-    "Wait 1 Minute": {
+    "Date & Time": {
       "main": [
         [
           {
-            "node": "Mixpanel Company's First Dashboard Access Date",
+            "node": "GET Closed Won Deals in Last 30 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Closed Won Deals in Last 30 Days": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Dashboard Events": {
+      "main": [
+        [
+          {
+            "node": "First Access TimeStamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "First Access TimeStamp": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
@@ -338,7 +490,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "338de835-ec09-43ac-b753-d2da159f633a",
+  "versionId": "3bd5a25a-fc89-488b-b9dd-49491cf03a5a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f35844c20bd7f8456f907e3b5a901af1cf08cec7fee985138953357fd244e5bd"
