@@ -5,7 +5,9 @@
       "parameters": {
         "rule": {
           "interval": [
-            {}
+            {
+              "field": "weeks"
+            }
           ]
         }
       },
@@ -14,7 +16,7 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
       "position": [
-        480,
+        400,
         400
       ]
     },
@@ -31,7 +33,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer HUBSPOT_TOKEN"
+              "value": "Bearer HubSpot_Token"
             }
           ]
         },
@@ -45,7 +47,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2460,
+        2660,
         400
       ]
     },
@@ -61,7 +63,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer HUBSPOT_TOKEN"
+              "value": "Bearer HubSpot_Token"
             }
           ]
         },
@@ -72,7 +74,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1460,
+        1420,
         420
       ]
     },
@@ -88,7 +90,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer HUBSPOT_TOKEN"
+              "value": "Bearer HubSpot_Token"
             }
           ]
         },
@@ -99,7 +101,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1660,
+        1640,
         420
       ]
     },
@@ -112,7 +114,7 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1200,
+        1220,
         400
       ]
     },
@@ -145,7 +147,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2240,
+        2440,
         420
       ]
     },
@@ -162,7 +164,7 @@
       "type": "n8n-nodes-base.dateTime",
       "typeVersion": 2,
       "position": [
-        660,
+        600,
         400
       ]
     },
@@ -179,7 +181,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer HUBSPOT_TOKEN"
+              "value": "Bearer HubSpot_Token"
             }
           ]
         },
@@ -193,7 +195,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        860,
+        800,
         400
       ]
     },
@@ -208,60 +210,9 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        1020,
+        1000,
         400
       ]
-    },
-    {
-      "parameters": {
-        "url": "https://data.mixpanel.com/api/2.0/export",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBasicAuth",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "from_date",
-              "value": "2017-01-01"
-            },
-            {
-              "name": "to_date",
-              "value": "={{ $today }}"
-            },
-            {
-              "name": "where",
-              "value": "=properties[\"tenant_email_domain\"] == \"{{ $json.properties.domain }}\""
-            },
-            {
-              "name": "event",
-              "value": "[\"Dashboard\"]"
-            },
-            {
-              "name": "project_id",
-              "value": "1998847"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "99c6b798-eca0-4552-8fec-928fb8829a74",
-      "name": "GET Dashboard Events",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1860,
-        420
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AMEXGcFl3daiEqWN",
-          "name": "Mixpanel Header Auth"
-        },
-        "httpBasicAuth": {
-          "id": "jYBMSfsxXCNqAD3b",
-          "name": "Mixpanel"
-        }
-      }
     },
     {
       "parameters": {
@@ -272,7 +223,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2060,
+        2240,
         420
       ]
     },
@@ -341,6 +292,70 @@
           "name": "Google Sheets account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "url": "https://data.mixpanel.com/api/2.0/export",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "from_date",
+              "value": "2017-01-01"
+            },
+            {
+              "name": "to_date",
+              "value": "={{ $json.yesterday }}"
+            },
+            {
+              "name": "where",
+              "value": "=properties[\"tenant_email_domain\"] == \"{{ $('Retrieve company domain').item.json.properties.domain }}\""
+            },
+            {
+              "name": "event",
+              "value": "[\"Dashboard\"]"
+            },
+            {
+              "name": "project_id",
+              "value": "1998847"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9b1c1bd6-ac55-40e5-bac0-0a7ecf864bb6",
+      "name": "GET Dashboard Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2040,
+        420
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jYBMSfsxXCNqAD3b",
+          "name": "Mixpanel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "subtractFromDate",
+        "magnitude": "={{$today}}",
+        "duration": 1,
+        "outputFieldName": "yesterday",
+        "options": {}
+      },
+      "id": "7d0bb772-e083-4c7c-8f50-a124bc192a78",
+      "name": "Yesterday",
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        420
+      ]
     }
   ],
   "pinData": {},
@@ -361,17 +376,6 @@
         [
           {
             "node": "Retrieve company domain",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Retrieve company domain": {
-      "main": [
-        [
-          {
-            "node": "GET Dashboard Events",
             "type": "main",
             "index": 0
           }
@@ -452,17 +456,6 @@
         ]
       ]
     },
-    "GET Dashboard Events": {
-      "main": [
-        [
-          {
-            "node": "First Access TimeStamp",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "First Access TimeStamp": {
       "main": [
         [
@@ -484,13 +477,46 @@
           }
         ]
       ]
+    },
+    "Yesterday": {
+      "main": [
+        [
+          {
+            "node": "GET Dashboard Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve company domain": {
+      "main": [
+        [
+          {
+            "node": "Yesterday",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Dashboard Events": {
+      "main": [
+        [
+          {
+            "node": "First Access TimeStamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3bd5a25a-fc89-488b-b9dd-49491cf03a5a",
+  "versionId": "e7bee830-4379-4fc7-855f-7ae2304e358d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f35844c20bd7f8456f907e3b5a901af1cf08cec7fee985138953357fd244e5bd"
